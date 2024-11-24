@@ -7,35 +7,29 @@ import { useAPICall } from "./useAPICall";
 import { Spinner } from "./Spinner";
 import Overlay from "./Overlay";
 
-const getIntialData = () => {
+const getInitialData = () => {
   const cardData = localStorage.getItem("cardData");
 
-  return cardData ? JSON.parse(cardData) : data;
+  if (cardData) {
+    try {
+      return JSON.parse(cardData);
+    } catch (e) {
+      console.error("Error parsing cardData from localStorage:", e);
+      localStorage.removeItem("cardData");
+      return data;
+    }
+  }
+  return data;
 };
 
 export const Gallery = (): ReactElement => {
-  const [cardData, setCardData] = useState(getIntialData());
+  const [cardData, setCardData] = useState(getInitialData());
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [timeElapsed, setTimeElapsed] = useState<string>("");
-  const [overlayImg, setOverlayImg] = useState('');
-  const { isLoading, callAPI } = useAPICall<{ ["string"]: string }>(
+  const [overlayImg, setOverlayImg] = useState("");
+  const { isLoading, callAPI } = useAPICall<{ [key: string]: string }>(
     "/api/data"
   );
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      console.log(e);
-      if(e.key === 'Escape'){
-        setOverlayImg('');
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [])
 
   const moveListItem = useCallback(
     (dragIndex: number, dropIndex: number) => {
@@ -92,8 +86,13 @@ export const Gallery = (): ReactElement => {
     <div className={style.container}>
       {!isLoading &&
         cardData?.map((cardDetails: CardProps, index: number) => (
-          <div className={style.card} key={index}>
-            <Card {...cardDetails} index={index} moveListItem={moveListItem} setOverlayImg={setOverlayImg}/>
+          <div className={style.card} key={cardDetails.type}>
+            <Card
+              {...cardDetails}
+              index={index}
+              moveListItem={moveListItem}
+              setOverlayImg={setOverlayImg}
+            />
           </div>
         ))}
       {isLoading && (
@@ -102,9 +101,9 @@ export const Gallery = (): ReactElement => {
           <Spinner></Spinner>
         </div>
       )}
-      <Overlay isVisible={!!overlayImg}>
+      <Overlay isVisible={!!overlayImg} onClose={() => setOverlayImg('')}>
         <figure>
-          <img src={overlayImg} width={250} height={250}/>
+          <img src={overlayImg} width={250} height={250} />
         </figure>
       </Overlay>
     </div>

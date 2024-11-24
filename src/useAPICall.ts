@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 
 type UseFetchResponse<T> = {
     data: T | undefined;
@@ -7,33 +7,31 @@ type UseFetchResponse<T> = {
     callAPI: (params?: RequestInit) => void;
 }
 
-function delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export const useAPICall = <T>(url: string ): UseFetchResponse<T> => {
     const [data, setData] = useState<T | undefined>();
-    const [error, setError] = useState<unknown>();
+    const [error, setError] = useState<Error | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const callAPI = async(params?: RequestInit) => {
+    const callAPI = useCallback(async(params:RequestInit={}) => {
+        const controller = new AbortController();
         try{
             setIsLoading(true);
-            setData(undefined);
-            await delay(5000);
-            const response = await fetch(url, params && {
-                ...params
-            });
-            const data = await response.json();
-            setData(data);
+            const response = await fetch(url, { ...params });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const responseData = await response.json();
+            setData(responseData);
         }
-        catch(err: unknown){ 
+        catch(err: any){ 
             setError(err);
         }
         finally{
             setIsLoading(false);
         }
-    }
+
+        return () => controller.abort();
+    }, [url]);
 
     return {data, isLoading, callAPI, error};
 }

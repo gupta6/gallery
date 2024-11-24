@@ -6,11 +6,7 @@ export const handlers = [
         // Read the intercepted request body as JSON.
         const data = await request.json()
      
-        // Push the new post to the map of all posts.
-        console.log(data);
-     
-        // Don't forget to declare a semantic "201 Created"
-        // response and send back the newly created post!
+        // response with status code!
         return HttpResponse.json({message: 'Successfully submitted!'}, { status: 201 })
       }),
     

@@ -67,9 +67,9 @@ export const Card = ({
     >
       <h2>{title}</h2>
       {isLoading && <Spinner />}
-      {data && (
+      {!isLoading && (
         <figure className={style.image}>
-          <img src={data[0]?.url} />
+          <img src={data?.[0]?.url} alt={title}/>
         </figure>
       )}
     </div>
